@@ -145,11 +145,28 @@ func (s *ConfigService) StartCore() error {
 }
 
 func (s *ConfigService) RestartCore() error {
-	err := s.StopCore()
+	// Serialize explicit restarts with saves, and validate before stopping the
+	// working instance. An explicit retry must not silently hit StartCore's
+	// automatic-retry cooldown and report success with the core still stopped.
+	configSaveMu.Lock()
+	defer configSaveMu.Unlock()
+	if corePtr == nil {
+		return common.NewError("sing-box core is not initialized")
+	}
+	raw, err := s.GetConfig("")
 	if err != nil {
 		return err
 	}
-	return s.StartCore()
+	if err = corePtr.ValidateConfig(*raw); err != nil {
+		return err
+	}
+	return s.restartCoreWithRaw(*raw)
+}
+
+func (s *ConfigService) CoreApplying() bool {
+	startCoreMu.Lock()
+	defer startCoreMu.Unlock()
+	return startCoreInProgress
 }
 
 func (s *ConfigService) restartCoreWithRaw(config []byte) error {
@@ -177,6 +194,9 @@ func (s *ConfigService) restartCoreWithRaw(config []byte) error {
 	if !corePtr.IsRunning() {
 		return common.NewError("sing-box did not report a running state after apply")
 	}
+	startCoreMu.Lock()
+	lastStartFailTime = time.Time{}
+	startCoreMu.Unlock()
 	return nil
 }
 
@@ -275,8 +295,40 @@ func (s *ConfigService) SaveWithApply(obj string, act string, data json.RawMessa
 		err = s.TlsService.Save(tx, act, data, hostname)
 		objs = append(objs, "clients", "inbounds")
 	case "inbounds":
+		var oldTag, newTag string
+		if act == "edit" {
+			var input struct {
+				ID  uint   `json:"id"`
+				Tag string `json:"tag"`
+			}
+			if err = json.Unmarshal(data, &input); err != nil {
+				return nil, err
+			}
+			if err = tx.Model(&model.Inbound{}).Select("tag").Where("id = ?", input.ID).Scan(&oldTag).Error; err != nil {
+				return nil, err
+			}
+			newTag = input.Tag
+		} else if act == "del" {
+			if err = json.Unmarshal(data, &oldTag); err != nil {
+				return nil, err
+			}
+		}
 		err = s.InboundService.Save(tx, act, data, initUsers, hostname)
-		objs = append(objs, "clients")
+		objs = append(objs, "clients", "config", "endpoints")
+		if err == nil {
+			var referencesChanged bool
+			referencesChanged, err = renameInboundReferences(tx, oldTag, newTag)
+			if err == nil && referencesChanged && previousRuntimeConfig != nil {
+				var staged *[]byte
+				staged, err = s.getConfigWithDB(tx, "")
+				if err == nil {
+					err = corePtr.ValidateConfig(*staged)
+				}
+				if err == nil {
+					err = s.restartCoreWithRaw(*staged)
+				}
+			}
+		}
 	case "outbounds":
 		err = s.OutboundService.Save(tx, act, data)
 	case "services":

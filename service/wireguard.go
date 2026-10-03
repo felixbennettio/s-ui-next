@@ -454,7 +454,7 @@ func normalizeAndValidateWireGuard(data json.RawMessage) (json.RawMessage, error
 		}
 		if role == "site_gateway" {
 			routeInbounds := stringsValue(peer["route_inbounds"])
-			if len(routeInbounds) == 0 {
+			if _, specified := peer["route_inbounds"]; !specified {
 				routeInbounds = []string{stringValue(root["tag"])}
 			}
 			peer["route_inbounds"] = interfaceStrings(routeInbounds)
@@ -766,8 +766,13 @@ func syncWireGuardManagedRoute(tx *gorm.DB, endpoint *model.Endpoint) error {
 			continue
 		}
 		inbounds := stringsValue(peer["route_inbounds"])
-		if len(inbounds) == 0 {
+		if _, specified := peer["route_inbounds"]; !specified {
 			inbounds = []string{endpoint.Tag}
+		}
+		// An explicit empty list keeps a deleted inbound from turning into a
+		// route for a different source when the endpoint is saved again.
+		if len(inbounds) == 0 {
+			continue
 		}
 		key := fmt.Sprintf("wireguard-site-gateway:%s:%d", endpoint.Tag, index)
 		rule := model.ManagedRouteRule{

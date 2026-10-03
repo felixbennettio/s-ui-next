@@ -4,9 +4,9 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-[![Latest release](https://img.shields.io/github/v/release/ciallothu/s-ui-next.svg)](https://github.com/ciallothu/s-ui-next/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ciallothu/s-ui-next)](https://goreportcard.com/report/github.com/ciallothu/s-ui-next)
-[![Downloads](https://img.shields.io/github/downloads/ciallothu/s-ui-next/total.svg)](https://github.com/ciallothu/s-ui-next/releases)
+[![Latest release](https://img.shields.io/github/v/release/felixbennettio/s-ui-next.svg)](https://github.com/felixbennettio/s-ui-next/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/felixbennettio/s-ui-next)](https://goreportcard.com/report/github.com/felixbennettio/s-ui-next)
+[![Downloads](https://img.shields.io/github/downloads/felixbennettio/s-ui-next/total.svg)](https://github.com/felixbennettio/s-ui-next/releases)
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
 S-UI Next is a downstream project based on [alireza0/s-ui](https://github.com/alireza0/s-ui). It keeps the original panel and database model while adding a versioned API, Android and iPhone management apps, stronger administrator authentication, searchable traffic and connection records, safer subscription links, WireGuard relays between VPS hosts, and directly managed Cloudflare WARP egress.
@@ -118,7 +118,7 @@ Support ultimately follows the embedded sing-box version and the build tags used
 | iPhone app | arm64 | unsigned `.ipa` |
 | GHCR image | linux/amd64, linux/386, linux/arm64/v8, linux/arm/v7, linux/arm/v6 | OCI image |
 
-Download the current packages from [GitHub Releases](https://github.com/ciallothu/s-ui-next/releases/latest). The iPhone package is not signed and must be signed with your own Apple Developer identity before installation.
+Download the current packages from [GitHub Releases](https://github.com/felixbennettio/s-ui-next/releases/latest). The iPhone package is not signed and must be signed with your own Apple Developer identity before installation.
 
 ## Quick Start
 
@@ -126,7 +126,7 @@ Download the current packages from [GitHub Releases](https://github.com/cialloth
 
 ```sh
 mkdir s-ui-next && cd s-ui-next
-curl -fsSLO https://raw.githubusercontent.com/ciallothu/s-ui-next/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/felixbennettio/s-ui-next/main/docker-compose.yml
 docker compose up -d
 ```
 
@@ -144,7 +144,7 @@ docker run -d \
   -p 2096:2096 \
   -v "$PWD/db:/app/db" \
   -v "$PWD/cert:/app/cert" \
-  ghcr.io/ciallothu/s-ui-next:latest
+  ghcr.io/felixbennettio/s-ui-next:latest
 ```
 
 ### Linux packages
@@ -224,17 +224,17 @@ For unusual proxy layouts, set the RP ID to a domain such as `panel.example.com`
 ## Development
 
 ```sh
-git clone --recurse-submodules https://github.com/ciallothu/s-ui-next.git
+git clone --recurse-submodules https://github.com/felixbennettio/s-ui-next.git
 cd s-ui-next
 ```
 
 - Backend: Go `1.26.5`; the exact version is declared in `go.mod`.
-- Frontend: Vue and TypeScript in the [`frontend`](https://github.com/ciallothu/s-ui-next-frontend) submodule. Use `npm ci`, then `npm run build`.
+- Frontend: Vue and TypeScript in the [`frontend`](https://github.com/felixbennettio/s-ui-next-frontend) submodule. Use `npm ci`, then `npm run build`.
 - Mobile: Flutter source lives in `mobile/`.
 - Full development and contribution instructions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Credits and License
 
-S-UI Next builds on [alireza0/s-ui](https://github.com/alireza0/s-ui) and [SagerNet/sing-box](https://github.com/SagerNet/sing-box). The Web frontend is maintained in [ciallothu/s-ui-next-frontend](https://github.com/ciallothu/s-ui-next-frontend).
+S-UI Next builds on [alireza0/s-ui](https://github.com/alireza0/s-ui) and [SagerNet/sing-box](https://github.com/SagerNet/sing-box). The Web frontend is maintained in [felixbennettio/s-ui-next-frontend](https://github.com/felixbennettio/s-ui-next-frontend).
 
 This project is distributed under the [GNU General Public License v3.0](LICENSE).

@@ -60,6 +60,8 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		a.apiv2.ReloadTokens()
 	case "save":
 		a.ApiService.Save(c, loginUser)
+	case "wireguardSecret":
+		a.ApiService.CopyWireGuardSecret(c)
 	case "wireguardExport":
 		a.ApiService.ExportWireGuard(c)
 	case "restartApp":

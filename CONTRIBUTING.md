@@ -34,7 +34,7 @@ Please be respectful and constructive when interacting with maintainers and othe
 ### Clone and Submodules
 
 ```bash
-git clone https://github.com/ciallothu/s-ui-next
+git clone https://github.com/felixbennettio/s-ui-next
 cd s-ui-next
 git submodule update --init --recursive
 ```
@@ -106,7 +106,7 @@ Use the same tags when building locally if you need feature parity with releases
 ### Docker (optional)
 
 ```bash
-git clone https://github.com/ciallothu/s-ui-next
+git clone https://github.com/felixbennettio/s-ui-next
 cd s-ui-next
 git submodule update --init --recursive
 docker build -t s-ui-next .
@@ -192,12 +192,12 @@ sing-box and upstream S-UI updates are reviewed as coordinated compatibility cha
 
 ## Features That Need Help
 
-Community help is especially valuable in these areas. Check the [Issues](https://github.com/ciallothu/s-ui-next/issues) for current tasks and ideas.
+Community help is especially valuable in these areas. Check the [Issues](https://github.com/felixbennettio/s-ui-next/issues) for current tasks and ideas.
 
 ### High-Value Areas
 
 - **Multi-inbound per user**: Core differentiator of S-UI Next; improvements to UX, docs, and robustness are welcome.
-- **API (v1 and v2)**: Completeness, consistency, and documentation (see [API Documentation](https://github.com/ciallothu/s-ui-next/wiki/API-Documentation)).
+- **API (v1 and v2)**: Completeness, consistency, and documentation (see [API Documentation](https://github.com/felixbennettio/s-ui-next/wiki/API-Documentation)).
 - **Subscription service**: Link conversion, JSON subscription, and info endpoints (`sub/`, `util/`).
 - **Testing**: Adding unit and integration tests for critical paths.
 - **Documentation**: User docs, API examples, and contribution docs (like this file).

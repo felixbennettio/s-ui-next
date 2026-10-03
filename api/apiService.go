@@ -55,8 +55,9 @@ func (a *ApiService) getData(c *gin.Context) (interface{}, error) {
 	onlines, err := a.StatsService.GetOnlines()
 
 	sysInfo := a.ServerService.GetSingboxInfo()
-	if sysInfo["running"] == false {
-		logs := a.ServerService.GetLogs("1", "debug")
+	data["coreApplying"] = a.ConfigService.CoreApplying()
+	if sysInfo["running"] == false && data["coreApplying"] == false {
+		logs := a.ServerService.GetLogs("1", "error")
 		if len(logs) > 0 {
 			data["lastLog"] = logs[0]
 		}
@@ -120,6 +121,15 @@ func (a *ApiService) getData(c *gin.Context) (interface{}, error) {
 }
 
 func (a *ApiService) LoadPartialData(c *gin.Context, objs []string) error {
+	data, err := a.partialData(c, objs)
+	if err != nil {
+		return err
+	}
+	jsonObj(c, data, nil)
+	return nil
+}
+
+func (a *ApiService) partialData(c *gin.Context, objs []string) (map[string]interface{}, error) {
 	data := make(map[string]interface{}, 0)
 	id := c.Query("id")
 
@@ -128,56 +138,55 @@ func (a *ApiService) LoadPartialData(c *gin.Context, objs []string) error {
 		case "inbounds":
 			inbounds, err := a.InboundService.Get(id)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			data[obj] = inbounds
 		case "outbounds":
 			outbounds, err := a.OutboundService.GetAll()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			data[obj] = outbounds
 		case "endpoints":
 			endpoints, err := a.EndpointService.GetAll()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			data[obj] = endpoints
 		case "services":
 			services, err := a.ServicesService.GetAll()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			data[obj] = services
 		case "tls":
 			tlsConfigs, err := a.TlsService.GetAll()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			data[obj] = tlsConfigs
 		case "clients":
 			clients, err := a.ClientService.Get(id)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			data[obj] = clients
 		case "config":
 			config, err := a.SettingService.GetConfig()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			data[obj] = json.RawMessage(config)
 		case "settings":
 			settings, err := a.SettingService.GetAllSetting()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			data[obj] = settings
 		}
 	}
 
-	jsonObj(c, data, nil)
-	return nil
+	return data, nil
 }
 
 func (a *ApiService) GetUsers(c *gin.Context) {
@@ -342,10 +351,15 @@ func (a *ApiService) Save(c *gin.Context, loginUser string) {
 		jsonMsg(c, "save", err)
 		return
 	}
-	err = a.LoadPartialData(c, objs)
+	updated, err := a.partialData(c, objs)
 	if err != nil {
-		jsonMsg(c, obj, err)
+		// The transaction has committed. A refresh failure must never turn that
+		// successful mutation into a failed save (and invite a duplicate retry).
+		logger.Warning("configuration saved, but reloading panel data failed: ", err)
+		c.JSON(http.StatusOK, Msg{Success: true, Obj: map[string]interface{}{}, Warning: "savedButRefreshFailed"})
+		return
 	}
+	jsonObj(c, updated, nil)
 }
 
 func (a *ApiService) ExportWireGuard(c *gin.Context) {

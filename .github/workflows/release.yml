@@ -2,8 +2,11 @@ name: Release S-UI Next
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+    inputs:
+      build_version:
+        description: Version label for validation artifacts (for example v1.0.15)
+        type: string
+        required: false
   push:
     branches:
       - main
@@ -25,7 +28,7 @@ permissions:
 
 env:
   NODE_VERSION: "25"
-  BUILD_VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
+  BUILD_VERSION: ${{ inputs.build_version || (github.ref_type == 'tag' && github.ref_name) || github.sha }}
   CRONET_GO_VERSION: "98d539ce67568fb911654e66a14cf4247ed833ec"
   CRONET_GO_REPO: https://github.com/sagernet/cronet-go.git
   BOOTLIN_BASE_URL: https://toolchains.bootlin.com/downloads/releases/toolchains

@@ -64,6 +64,10 @@ func (a *APP) Start() error {
 		return err
 	}
 
+	if err = a.configService.ReconcileInboundReferences(); err != nil {
+		logger.Warning("unable to clean stale inbound references: ", err)
+	}
+
 	err = a.cronJob.Start(loc, trafficAge)
 	if err != nil {
 		return err
