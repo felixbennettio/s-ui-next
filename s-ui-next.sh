@@ -63,7 +63,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/ciallothu/s-ui-next/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/felixbennettio/s-ui-next/main/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -82,7 +82,7 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/ciallothu/s-ui-next/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/felixbennettio/s-ui-next/main/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "Update is complete, Panel has automatically restarted "
         exit 0
@@ -98,7 +98,7 @@ custom_version() {
     exit 1
     fi
 
-    download_link="https://raw.githubusercontent.com/ciallothu/s-ui-next/master/install.sh"
+    download_link="https://raw.githubusercontent.com/felixbennettio/s-ui-next/main/install.sh"
 
     install_command="bash <(curl -Ls $download_link) $panel_version"
 
@@ -295,7 +295,7 @@ show_log() {
 }
 
 update_shell() {
-    wget -O /usr/bin/s-ui-next -N --no-check-certificate https://github.com/ciallothu/s-ui-next/raw/main/s-ui-next.sh
+    wget -O /usr/bin/s-ui-next -N --no-check-certificate https://github.com/felixbennettio/s-ui-next/raw/main/s-ui-next.sh
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "Failed to download script, Please check whether the machine can connect Github"

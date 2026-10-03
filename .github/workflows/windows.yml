@@ -2,8 +2,11 @@ name: Build S-UI Next for Windows
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+    inputs:
+      build_version:
+        description: Version label for validation artifacts (for example v1.0.15)
+        type: string
+        required: false
   push:
     branches:
       - main
@@ -24,7 +27,7 @@ permissions:
 
 env:
   NODE_VERSION: "25"
-  BUILD_VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
+  BUILD_VERSION: ${{ inputs.build_version || (github.ref_type == 'tag' && github.ref_name) || github.sha }}
   TAGS: "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,badlinkname,tfogo_checklinkname0,with_tailscale"
   LIBCRONET_BASE_URL: "https://github.com/SagerNet/cronet-go/releases/latest/download"
 

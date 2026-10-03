@@ -4,9 +4,9 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-[![最新版本](https://img.shields.io/github/v/release/ciallothu/s-ui-next.svg)](https://github.com/ciallothu/s-ui-next/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ciallothu/s-ui-next)](https://goreportcard.com/report/github.com/ciallothu/s-ui-next)
-[![下载量](https://img.shields.io/github/downloads/ciallothu/s-ui-next/total.svg)](https://github.com/ciallothu/s-ui-next/releases)
+[![最新版本](https://img.shields.io/github/v/release/felixbennettio/s-ui-next.svg)](https://github.com/felixbennettio/s-ui-next/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/felixbennettio/s-ui-next)](https://goreportcard.com/report/github.com/felixbennettio/s-ui-next)
+[![下载量](https://img.shields.io/github/downloads/felixbennettio/s-ui-next/total.svg)](https://github.com/felixbennettio/s-ui-next/releases)
 [![许可证](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
 S-UI Next 是基于 [alireza0/s-ui](https://github.com/alireza0/s-ui) 继续维护的下游项目。它保留原有面板和数据库模型，在此基础上加入版本化 API、Android 与 iPhone 管理 App、管理员多因素认证、可检索的流量与连接记录、更加稳妥的订阅链接、支持双 VPS 中转的 WireGuard，以及可直接创建的 Cloudflare WARP 出口。
@@ -118,7 +118,7 @@ S-UI Next 是基于 [alireza0/s-ui](https://github.com/alireza0/s-ui) 继续维�
 | iPhone App | arm64 | 未签名 `.ipa` |
 | GHCR 镜像 | linux/amd64、linux/386、linux/arm64/v8、linux/arm/v7、linux/arm/v6 | OCI 镜像 |
 
-安装包可以从 [GitHub Releases](https://github.com/ciallothu/s-ui-next/releases/latest) 下载。iPhone 安装包没有签名，需要使用自己的 Apple Developer 身份签名后安装。
+安装包可以从 [GitHub Releases](https://github.com/felixbennettio/s-ui-next/releases/latest) 下载。iPhone 安装包没有签名，需要使用自己的 Apple Developer 身份签名后安装。
 
 ## 快速开始
 
@@ -126,7 +126,7 @@ S-UI Next 是基于 [alireza0/s-ui](https://github.com/alireza0/s-ui) 继续维�
 
 ```sh
 mkdir s-ui-next && cd s-ui-next
-curl -fsSLO https://raw.githubusercontent.com/ciallothu/s-ui-next/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/felixbennettio/s-ui-next/main/docker-compose.yml
 docker compose up -d
 ```
 
@@ -144,7 +144,7 @@ docker run -d \
   -p 2096:2096 \
   -v "$PWD/db:/app/db" \
   -v "$PWD/cert:/app/cert" \
-  ghcr.io/ciallothu/s-ui-next:latest
+  ghcr.io/felixbennettio/s-ui-next:latest
 ```
 
 ### Linux 安装包
@@ -224,17 +224,17 @@ https://panel.example.com/app/api/oidc-callback
 ## 开发
 
 ```sh
-git clone --recurse-submodules https://github.com/ciallothu/s-ui-next.git
+git clone --recurse-submodules https://github.com/felixbennettio/s-ui-next.git
 cd s-ui-next
 ```
 
 - 后端使用 Go，准确版本见 `go.mod`。
-- Web 前端使用 Vue 和 TypeScript，位于 [`frontend`](https://github.com/ciallothu/s-ui-next-frontend) 子模块。
+- Web 前端使用 Vue 和 TypeScript，位于 [`frontend`](https://github.com/felixbennettio/s-ui-next-frontend) 子模块。
 - Flutter 移动端源码位于 `mobile/`。
 - 完整开发与贡献说明见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 
 ## 来源与许可证
 
-S-UI Next 基于 [alireza0/s-ui](https://github.com/alireza0/s-ui) 和 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 开发。Web 前端由 [ciallothu/s-ui-next-frontend](https://github.com/ciallothu/s-ui-next-frontend) 单独维护。
+S-UI Next 基于 [alireza0/s-ui](https://github.com/alireza0/s-ui) 和 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 开发。Web 前端由 [felixbennettio/s-ui-next-frontend](https://github.com/felixbennettio/s-ui-next-frontend) 单独维护。
 
 本项目使用 [GNU General Public License v3.0](LICENSE) 发布。

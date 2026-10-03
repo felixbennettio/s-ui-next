@@ -1,7 +1,7 @@
 ---
 services:
   s-ui-next:
-    image: ghcr.io/ciallothu/s-ui-next
+    image: ghcr.io/felixbennettio/s-ui-next
     container_name: s-ui-next
     hostname: "s-ui-next"
     volumes:
@@ -19,4 +19,3 @@ services:
 networks:
   s-ui-next:
     driver: bridge
-  

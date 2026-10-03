@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 
 	"github.com/ciallothu/s-ui-next/logger"
 
@@ -26,17 +28,14 @@ var (
 )
 
 type Core struct {
-	isRunning bool
-	instance  *Box
+	lifecycle sync.Mutex
+	instance  atomic.Pointer[Box]
 }
 
 func NewCore() *Core {
 	globalCtx = context.Background()
 	globalCtx = sb.Context(globalCtx, InboundRegistry(), OutboundRegistry(), EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry())
-	return &Core{
-		isRunning: false,
-		instance:  nil,
-	}
+	return &Core{}
 }
 
 func (c *Core) GetCtx() context.Context {
@@ -44,10 +43,15 @@ func (c *Core) GetCtx() context.Context {
 }
 
 func (c *Core) GetInstance() *Box {
-	return c.instance
+	return c.instance.Load()
 }
 
 func (c *Core) Start(sbConfig []byte) error {
+	c.lifecycle.Lock()
+	defer c.lifecycle.Unlock()
+	if c.IsRunning() {
+		return nil
+	}
 	var opt option.Options
 	err := opt.UnmarshalJSONContext(globalCtx, sbConfig)
 	if err != nil {
@@ -55,7 +59,7 @@ func (c *Core) Start(sbConfig []byte) error {
 		return err
 	}
 
-	c.instance, err = NewBox(Options{
+	instance, err := NewBox(Options{
 		Context: globalCtx,
 		Options: opt,
 	})
@@ -63,13 +67,12 @@ func (c *Core) Start(sbConfig []byte) error {
 		return err
 	}
 
-	err = c.instance.Start()
+	err = instance.Start()
 	if err != nil {
-		_ = c.instance.Close()
-		c.instance = nil
+		_ = instance.Close()
 		return err
 	}
-	factory = c.instance.logFactory
+	factory = instance.logFactory
 
 	globalCtx = service.ContextWith(globalCtx, c)
 	inbound_manager = service.FromContext[adapter.InboundManager](globalCtx)
@@ -78,7 +81,7 @@ func (c *Core) Start(sbConfig []byte) error {
 	endpoint_manager = service.FromContext[adapter.EndpointManager](globalCtx)
 	router = service.FromContext[adapter.Router](globalCtx)
 
-	c.isRunning = true
+	c.instance.Store(instance)
 	return nil
 }
 
@@ -100,15 +103,15 @@ func (c *Core) ValidateConfig(sbConfig []byte) error {
 }
 
 func (c *Core) Stop() error {
-	c.isRunning = false
-	if c.instance == nil {
+	c.lifecycle.Lock()
+	defer c.lifecycle.Unlock()
+	instance := c.instance.Swap(nil)
+	if instance == nil {
 		return nil
 	}
-	err := c.instance.Close()
-	c.instance = nil
-	return err
+	return instance.Close()
 }
 
 func (c *Core) IsRunning() bool {
-	return c.isRunning
+	return c.instance.Load() != nil
 }

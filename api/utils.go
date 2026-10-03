@@ -14,6 +14,7 @@ type Msg struct {
 	Success bool        `json:"success"`
 	Msg     string      `json:"msg"`
 	Obj     interface{} `json:"obj"`
+	Warning string      `json:"warning,omitempty"`
 }
 
 func getRemoteIp(c *gin.Context) string {
