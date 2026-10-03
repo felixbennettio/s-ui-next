@@ -187,6 +187,10 @@ jobs:
           cp s-ui-next.service s-ui-next/
           cp s-ui-next.sh s-ui-next/
 
+      - name: Smoke-test packaged Linux amd64
+        if: matrix.platform == 'amd64'
+        run: python3 .github/scripts/smoke_binary.py ./s-ui-next/sui
+
       - name: Package
         run: tar -zcvf "s-ui-next-${BUILD_VERSION}-linux-${{ matrix.platform }}.tar.gz" s-ui-next
 
