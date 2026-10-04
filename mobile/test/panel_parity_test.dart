@@ -139,7 +139,7 @@ void main() {
         await tester.pumpAndSettle();
       }
       expect(find.text('Overview'), findsOneWidget);
-      expect(find.text('Access'), findsOneWidget);
+      expect(find.descendant(of: find.byType(NavigationDrawer), matching: find.text('Access')), findsOneWidget);
       await tester.tap(find.widgetWithText(NavigationDrawerDestination, 'Users'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
@@ -152,6 +152,8 @@ void main() {
     final state = AppState()..api = api..localeCode = 'en';
     await tester.pumpWidget(_app(state, const DashboardPage()));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Running'), findsOneWidget);
     api.failStatus = true;
     await tester.pump(const Duration(seconds: 2));
     await tester.pump();
