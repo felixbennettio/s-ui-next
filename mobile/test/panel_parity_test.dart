@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -186,6 +185,36 @@ void main() {
     expect(initial['private_key'], '[redacted]');
     expect(find.text('test-only-secret'), findsNothing);
     expect(find.text('Copied'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a pasted key copies the edited value and reports clipboard errors', (tester) async {
+    final api = _PanelApi();
+    final state = AppState()..api = api..localeCode = 'en';
+    String? clipboard;
+    var failClipboard = false;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        if (failClipboard) throw PlatformException(code: 'unavailable');
+        clipboard = (call.arguments as Map)['text'] as String;
+      }
+      return null;
+    });
+    addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+    await tester.pumpWidget(_app(state, VisualEditorDialog(title: 'WireGuard', resource: 'endpoints',
+      initialValue: const {'type': 'wireguard', 'private_key': ''}, onSave: (_) async {})));
+    await tester.enterText(find.byType(TextFormField), 'new-test-key');
+    await tester.pump();
+    await tester.tap(find.byTooltip('Copy').first);
+    await tester.pumpAndSettle();
+    expect(clipboard, 'new-test-key');
+    expect(api.secretRequests, 0);
+    await tester.pump(const Duration(seconds: 5));
+    failClipboard = true;
+    await tester.tap(find.byTooltip('Copy').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Copy failed. Please try again.'), findsOneWidget);
+    expect(find.text('Copied'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
 

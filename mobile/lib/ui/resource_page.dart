@@ -105,8 +105,12 @@ class _ResourcePageState extends State<ResourcePage> {
     final controller = TextEditingController(text: '[]');
     await showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (context, setDialogState) => PopScope(
+          canPop: !executing,
+          child: AlertDialog(
+          scrollable: true,
           title: Text(context.t('resource.bulk')),
           content: SizedBox(
             width: 620,
@@ -148,6 +152,7 @@ class _ResourcePageState extends State<ResourcePage> {
               child: Text(context.t('resource.execute')),
             ),
           ],
+        ),
         ),
       ),
     );

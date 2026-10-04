@@ -42,6 +42,7 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
   _EditorMode mode = _EditorMode.visual;
   bool saving = false;
   bool copyingSecret = false;
+  final keyControllers = <String, TextEditingController>{};
   String? error;
 
   @override
@@ -56,6 +57,9 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
   @override
   void dispose() {
     jsonController.dispose();
+    for (final controller in keyControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -128,7 +132,7 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
                 icon: const Icon(Icons.save_outlined),
                 label: Text(context.t('common.save')),
               ),
-            TextButton.icon(
+            FilledButton.icon(
               onPressed: saving ? null : () => save(),
               icon: saving
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
@@ -375,7 +379,8 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
         const {'private_key', 'client_private_key', 'pre_shared_key'}.contains(key) &&
         (redacted || boolValue(parent['${key}_set'])) &&
         (key == 'private_key' || (parent['public_key']?.toString().isNotEmpty ?? false));
-    final canCopy = (current.isNotEmpty && !redacted) || canCopyStored;
+    final controller = keyControllers.putIfAbsent(path, () => TextEditingController(text: current));
+    if (controller.text != current) controller.text = current;
     final canGeneratePair = rootType == 'warp'
         ? key == 'private_key'
         : key == 'private_key' || key == 'client_private_key' || key == 'public_key';
@@ -387,8 +392,8 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             TextFormField(
-                key: ValueKey('$path:$current'),
-                initialValue: current,
+                key: ValueKey(path),
+                controller: controller,
                 obscureText: key != 'public_key',
                 autocorrect: false,
                 enableSuggestions: false,
@@ -405,7 +410,11 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
                   }
                 },
               ),
-            Wrap(
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (context, editing, _) {
+                final canCopy = (editing.text.isNotEmpty && !schema.isRedactedSecret(editing.text)) || canCopyStored;
+                return Wrap(
               spacing: 2,
               children: [
                 IconButton(
@@ -443,6 +452,8 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
                 ],
                 _removeButton(parent, key),
               ],
+                );
+              },
             ),
           ],
         ),
