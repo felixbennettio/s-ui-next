@@ -30,10 +30,15 @@ class _AppShellState extends State<AppShell> {
   int selected = 0;
 
   int refreshVersion = 0;
+  bool openTools = false;
 
   void navigate(String key) {
-    final index = destinations.indexWhere((item) => item.labelKey == key);
-    if (index >= 0) setState(() => selected = index);
+    final tools = key == 'settings.tools';
+    final index = destinations.indexWhere((item) => item.labelKey == (tools ? 'nav.tools' : key));
+    if (index >= 0) setState(() {
+      selected = index;
+      openTools = tools;
+    });
   }
 
   late final destinations = <_Destination>[
@@ -46,7 +51,7 @@ class _AppShellState extends State<AppShell> {
     _Destination('navigation.network', 'nav.endpoints', Icons.vpn_key_outlined, (context) => ResourcePage(resource: 'endpoints', title: context.t('nav.endpoints'), icon: Icons.vpn_key_outlined)),
     _Destination('navigation.network', 'nav.config', Icons.route_outlined, (_) => const ConfigPage()),
     _Destination('navigation.operations', 'nav.services', Icons.dns_outlined, (context) => ResourcePage(resource: 'services', title: context.t('nav.services'), icon: Icons.dns_outlined)),
-    _Destination('navigation.operations', 'nav.tools', Icons.settings_outlined, (_) => const SettingsPage()),
+    _Destination('navigation.operations', 'nav.tools', Icons.settings_outlined, (_) => SettingsPage(initialTab: openTools ? 1 : 0)),
     _Destination('navigation.operations', 'nav.admin', Icons.admin_panel_settings_outlined, (_) => const AdminPage()),
   ];
 
@@ -98,7 +103,7 @@ class _AppShellState extends State<AppShell> {
     return NavigationDrawer(
       selectedIndex: selected,
       onDestinationSelected: (index) {
-        setState(() => selected = index);
+        setState(() { selected = index; openTools = false; });
         if (!persistent) Navigator.pop(context);
       },
       children: [

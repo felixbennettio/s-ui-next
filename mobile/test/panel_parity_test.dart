@@ -14,6 +14,7 @@ import 'package:sui_mobile/core/save_result.dart';
 import 'package:sui_mobile/ui/config_page.dart';
 import 'package:sui_mobile/ui/dashboard_page.dart';
 import 'package:sui_mobile/ui/shell.dart';
+import 'package:sui_mobile/ui/tools_page.dart';
 import 'package:sui_mobile/ui/visual_editor.dart';
 
 class _PanelApi extends ApiClient {
@@ -156,6 +157,18 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets('dashboard tool shortcut opens the tools tab', (tester) async {
+    final state = AppState()..api = _PanelApi()..localeCode = 'en';
+    await tester.pumpWidget(_app(state, const AppShell()));
+    await tester.pump();
+    tester.widget<DashboardPage>(find.byType(DashboardPage)).onNavigate!('settings.tools');
+    await tester.pumpAndSettle();
+    expect(find.byType(ToolsPage), findsOneWidget);
+    expect(DefaultTabController.of(tester.element(find.byType(TabBar))).index, 1);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('dashboard retains previous data on failure and stops polling in background', (tester) async {
     final api = _PanelApi();

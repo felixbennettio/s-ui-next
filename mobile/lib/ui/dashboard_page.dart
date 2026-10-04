@@ -223,9 +223,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                 ])),
                 const SizedBox(height: 8),
                 _section(context.t('dashboard.quickActions'), Column(children: [
-                  _shortcut('tools.backupRestore', 'nav.tools', Icons.backup_outlined),
+                  _shortcut('tools.backupRestore', 'settings.tools', Icons.backup_outlined),
                   _shortcut('nav.analytics', 'nav.analytics', Icons.query_stats),
-                  _shortcut('nav.tools', 'nav.tools', Icons.build_outlined),
+                  _shortcut('settings.tools', 'settings.tools', Icons.build_outlined),
                 ])),
               ]),
             ]),

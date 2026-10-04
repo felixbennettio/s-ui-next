@@ -5,11 +5,13 @@ import 'config_page.dart';
 import 'tools_page.dart';
 
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.initialTab = 0});
+  final int initialTab;
 
   @override
   Widget build(BuildContext context) => DefaultTabController(
         length: 2,
+        initialIndex: initialTab,
         child: Column(
           children: [
             TabBar(tabs: [
