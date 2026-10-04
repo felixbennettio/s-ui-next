@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ciallothu/s-ui-next/database/model"
-	"github.com/ciallothu/s-ui-next/util/common"
+	"github.com/felixbennettio/s-ui-next/database/model"
+	"github.com/felixbennettio/s-ui-next/util/common"
 )
 
 var InboundTypeWithLink = []string{"socks", "http", "mixed", "shadowsocks", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}

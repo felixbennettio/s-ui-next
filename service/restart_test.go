@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ciallothu/s-ui-next/core"
-	"github.com/ciallothu/s-ui-next/database"
-	"github.com/ciallothu/s-ui-next/database/model"
-	projectLogger "github.com/ciallothu/s-ui-next/logger"
+	"github.com/felixbennettio/s-ui-next/core"
+	"github.com/felixbennettio/s-ui-next/database"
+	"github.com/felixbennettio/s-ui-next/database/model"
+	projectLogger "github.com/felixbennettio/s-ui-next/logger"
 	"github.com/op/go-logging"
 )
 

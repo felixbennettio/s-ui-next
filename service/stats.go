@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ciallothu/s-ui-next/database"
-	"github.com/ciallothu/s-ui-next/database/model"
+	"github.com/felixbennettio/s-ui-next/database"
+	"github.com/felixbennettio/s-ui-next/database/model"
 
 	"gorm.io/gorm"
 )

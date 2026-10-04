@@ -9,7 +9,9 @@ import '../state/app_state.dart';
 import 'widgets.dart';
 
 class AnalyticsPage extends StatefulWidget {
-  const AnalyticsPage({super.key});
+  const AnalyticsPage({super.key, this.initialTab = 0});
+
+  final int initialTab;
 
   @override
   State<AnalyticsPage> createState() => _AnalyticsPageState();
@@ -39,7 +41,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    tabs = TabController(length: 4, vsync: this)..addListener(() {
+    tabs = TabController(length: 4, initialIndex: widget.initialTab, vsync: this)..addListener(() {
         if (!tabs.indexIsChanging) load();
       });
     load();

@@ -3,9 +3,23 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../core/app_locale_context.dart';
+import '../core/save_result.dart';
+
+void showSaveResult(BuildContext context, SaveResult result) {
+  showMessage(context, context.tr(result.messageKey));
+}
+
+Future<void> copyText(BuildContext context, String value) async {
+  try {
+    await Clipboard.setData(ClipboardData(text: value));
+    if (context.mounted) showMessage(context, context.tr('resource.copied'));
+  } catch (_) {
+    if (context.mounted) showMessage(context, context.tr('common.copyFailed'), error: true);
+  }
 
 const _selectMenuRadius = BorderRadius.all(Radius.circular(16));
 const _selectMenuRowHeight = kMinInteractiveDimension;

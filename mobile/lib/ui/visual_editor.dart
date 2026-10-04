@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/app_locale_context.dart';
@@ -20,6 +19,7 @@ class VisualEditorDialog extends StatefulWidget {
     required this.onSave,
     this.onSaveOnly,
     this.actionLabel = '',
+    this.initialJson = false,
   });
 
   final String title;
@@ -28,6 +28,7 @@ class VisualEditorDialog extends StatefulWidget {
   final Future<void> Function(dynamic value) onSave;
   final Future<void> Function(dynamic value)? onSaveOnly;
   final String actionLabel;
+  final bool initialJson;
 
   @override
   State<VisualEditorDialog> createState() => _VisualEditorDialogState();
@@ -39,12 +40,14 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
   late final VisualEditorSchema schema;
   _EditorMode mode = _EditorMode.visual;
   bool saving = false;
+  bool copyingSecret = false;
   String? error;
 
   @override
   void initState() {
     super.initState();
     schema = VisualEditorSchema.forResource(widget.resource);
+    mode = widget.initialJson ? _EditorMode.json : _EditorMode.visual;
     value = _copy(widget.initialValue);
     jsonController = TextEditingController(text: prettyJson(value));
   }
@@ -73,6 +76,7 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
   }
 
   Future<void> save({bool apply = true}) async {
+    if (saving) return;
     dynamic next = value;
     if (mode == _EditorMode.json) {
       try {
@@ -108,8 +112,15 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
       backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
           title: Text(widget.title),
-          leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-          actions: [
+          leading: IconButton(icon: const Icon(Icons.close), onPressed: saving ? null : () => Navigator.pop(context)),
+        ),
+        bottomNavigationBar: SafeArea(
+          minimum: const EdgeInsets.all(12),
+          child: OverflowBar(
+            alignment: MainAxisAlignment.end,
+            spacing: 8,
+            overflowSpacing: 8,
+            children: [
             if (widget.onSaveOnly != null)
               TextButton.icon(
                 onPressed: saving ? null : () => save(apply: false),
@@ -129,7 +140,8 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
                         : context.t('common.save'),
               ),
             ),
-          ],
+            ],
+          ),
         ),
         body: SafeArea(
           child: Column(
@@ -142,7 +154,7 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
                     const ButtonSegment(value: _EditorMode.json, icon: Icon(Icons.data_object), label: Text('JSON')),
                   ],
                   selected: {mode},
-                  onSelectionChanged: (selection) => changeMode(selection.first),
+                  onSelectionChanged: saving ? null : (selection) => changeMode(selection.first),
                 ),
               ),
               if (error != null)
@@ -151,7 +163,9 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
                   child: Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ),
               Expanded(
-                child: mode == _EditorMode.json
+                child: AbsorbPointer(
+                  absorbing: saving,
+                  child: mode == _EditorMode.json
                     ? Padding(
                         padding: const EdgeInsets.all(12),
                         child: TextField(
@@ -169,15 +183,16 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
                     : value is Map
                         ? _buildVisualBody()
                         : EmptyState(label: context.t('editor.needObject')),
+                ),
               ),
             ],
           ),
         ),
       );
     if (compact) {
-      return Dialog.fullscreen(child: editor);
+      return PopScope(canPop: !saving, child: Dialog.fullscreen(child: editor));
     }
-    return Dialog(
+    return PopScope(canPop: !saving, child: Dialog(
       insetPadding: const EdgeInsets.all(24),
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
@@ -185,7 +200,7 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
         height: math.min(820, screen.height - 48),
         child: editor,
       ),
-    );
+    ));
   }
 
   Widget _buildVisualBody() {
@@ -352,9 +367,14 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
   Widget _buildWireGuardKeyField(Map<dynamic, dynamic> parent, String key, dynamic fieldValue, String path, String label) {
     final current = fieldValue?.toString() ?? '';
     final redacted = schema.isRedactedSecret(current);
-    final canCopy = current.isNotEmpty && !redacted;
     final isPsk = key == 'pre_shared_key';
     final rootType = value is Map ? (value as Map)['type']?.toString() : '';
+    final rootId = value is Map ? int.tryParse('${(value as Map)['id']}') ?? 0 : 0;
+    final canCopyStored = rootType == 'wireguard' && rootId > 0 &&
+        const {'private_key', 'client_private_key', 'pre_shared_key'}.contains(key) &&
+        (redacted || boolValue(parent['${key}_set'])) &&
+        (key == 'private_key' || (parent['public_key']?.toString().isNotEmpty ?? false));
+    final canCopy = (current.isNotEmpty && !redacted) || canCopyStored;
     final canGeneratePair = rootType == 'warp'
         ? key == 'private_key'
         : key == 'private_key' || key == 'client_private_key' || key == 'public_key';
@@ -362,11 +382,10 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(
-              child: TextFormField(
+            TextFormField(
                 key: ValueKey('$path:$current'),
                 initialValue: current,
                 obscureText: key != 'public_key',
@@ -379,20 +398,19 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
                 ),
                 onChanged: (next) {
                   parent[key] = next.trim();
-                  if (isPsk) parent['pre_shared_key_set'] = next.trim().isNotEmpty;
+                  if (isPsk) {
+                    parent['pre_shared_key_set'] = next.trim().isNotEmpty;
+                    parent.remove('pre_shared_key_clear');
+                  }
                 },
               ),
-            ),
             Wrap(
               spacing: 2,
               children: [
                 IconButton(
                   tooltip: context.t('resource.copy'),
-                  onPressed: canCopy
-                      ? () {
-                          Clipboard.setData(ClipboardData(text: current));
-                          showMessage(context, context.tr('resource.copied'));
-                        }
+                  onPressed: canCopy && !copyingSecret
+                      ? () => _copyWireGuardKey(parent, key, rootId)
                       : null,
                   icon: const Icon(Icons.content_copy_outlined),
                 ),
@@ -429,6 +447,30 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
         ),
       ),
     );
+  }
+
+  Future<void> _copyWireGuardKey(Map<dynamic, dynamic> parent, String key, int endpointId) async {
+    setState(() => copyingSecret = true);
+    try {
+      var secret = parent[key]?.toString() ?? '';
+      if (secret.isEmpty || schema.isRedactedSecret(secret)) {
+        final result = await context.read<AppState>().api!.post('wireguard/secret', data: {
+          'id': endpointId,
+          'field': key,
+          if (key != 'private_key') 'publicKey': parent['public_key'],
+        });
+        if (result is! String || result.isEmpty || schema.isRedactedSecret(result)) {
+          throw FormatException(context.mounted ? context.tr('common.copyFailed') : 'Key unavailable');
+        }
+        secret = result;
+      }
+      // Deliberately do not retain the fetched secret in the editable resource.
+      if (mounted) await copyText(context, secret);
+    } catch (exception) {
+      if (mounted) showMessage(context, exception.toString(), error: true);
+    } finally {
+      if (mounted) setState(() => copyingSecret = false);
+    }
   }
 
   Future<void> _generateWireGuardKeyPair(Map<dynamic, dynamic> parent, String key, String path, String current) async {

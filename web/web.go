@@ -14,12 +14,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ciallothu/s-ui-next/api"
-	"github.com/ciallothu/s-ui-next/config"
-	"github.com/ciallothu/s-ui-next/logger"
-	"github.com/ciallothu/s-ui-next/middleware"
-	"github.com/ciallothu/s-ui-next/network"
-	"github.com/ciallothu/s-ui-next/service"
+	"github.com/felixbennettio/s-ui-next/api"
+	"github.com/felixbennettio/s-ui-next/config"
+	"github.com/felixbennettio/s-ui-next/logger"
+	"github.com/felixbennettio/s-ui-next/middleware"
+	"github.com/felixbennettio/s-ui-next/network"
+	"github.com/felixbennettio/s-ui-next/service"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/sessions"

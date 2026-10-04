@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ciallothu/s-ui-next/config"
+	"github.com/felixbennettio/s-ui-next/config"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

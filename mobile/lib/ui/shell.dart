@@ -8,11 +8,12 @@ import 'analytics_page.dart';
 import 'config_page.dart';
 import 'dashboard_page.dart';
 import 'resource_page.dart';
-import 'tools_page.dart';
+import 'settings_page.dart';
 import 'widgets.dart';
 
 class _Destination {
-  const _Destination(this.labelKey, this.icon, this.builder);
+  const _Destination(this.groupKey, this.labelKey, this.icon, this.builder);
+  final String groupKey;
   final String labelKey;
   final IconData icon;
   final Widget Function(BuildContext context) builder;
@@ -28,18 +29,25 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int selected = 0;
 
+  int refreshVersion = 0;
+
+  void navigate(String key) {
+    final index = destinations.indexWhere((item) => item.labelKey == key);
+    if (index >= 0) setState(() => selected = index);
+  }
+
   late final destinations = <_Destination>[
-    _Destination('nav.home', Icons.home_outlined, (_) => const DashboardPage()),
-    _Destination('nav.clients', Icons.people_outline, (context) => ResourcePage(resource: 'clients', title: context.t('nav.clients'), icon: Icons.people_outline)),
-    _Destination('nav.inbounds', Icons.cloud_download_outlined, (context) => ResourcePage(resource: 'inbounds', title: context.t('nav.inbounds'), icon: Icons.cloud_download_outlined)),
-    _Destination('nav.outbounds', Icons.cloud_upload_outlined, (context) => ResourcePage(resource: 'outbounds', title: context.t('nav.outbounds'), icon: Icons.cloud_upload_outlined)),
-    _Destination('nav.endpoints', Icons.cloud_queue_outlined, (context) => ResourcePage(resource: 'endpoints', title: context.t('nav.endpoints'), icon: Icons.cloud_queue_outlined)),
-    _Destination('nav.services', Icons.dns_outlined, (context) => ResourcePage(resource: 'services', title: context.t('nav.services'), icon: Icons.dns_outlined)),
-    _Destination('nav.tls', Icons.workspace_premium_outlined, (context) => ResourcePage(resource: 'tls', title: context.t('nav.tls'), icon: Icons.workspace_premium_outlined)),
-    _Destination('nav.config', Icons.tune, (_) => const ConfigPage()),
-    _Destination('nav.analytics', Icons.query_stats, (_) => const AnalyticsPage()),
-    _Destination('nav.admin', Icons.admin_panel_settings_outlined, (_) => const AdminPage()),
-    _Destination('nav.tools', Icons.settings_outlined, (_) => const ToolsPage()),
+    _Destination('navigation.overview', 'nav.home', Icons.dashboard_outlined, (_) => DashboardPage(onNavigate: navigate)),
+    _Destination('navigation.overview', 'nav.analytics', Icons.query_stats, (_) => const AnalyticsPage()),
+    _Destination('navigation.access', 'nav.clients', Icons.people_outline, (context) => ResourcePage(resource: 'clients', title: context.t('nav.clients'), icon: Icons.people_outline)),
+    _Destination('navigation.access', 'nav.inbounds', Icons.login, (context) => ResourcePage(resource: 'inbounds', title: context.t('nav.inbounds'), icon: Icons.login)),
+    _Destination('navigation.access', 'nav.tls', Icons.workspace_premium_outlined, (context) => ResourcePage(resource: 'tls', title: context.t('nav.tls'), icon: Icons.workspace_premium_outlined)),
+    _Destination('navigation.network', 'nav.outbounds', Icons.logout, (context) => ResourcePage(resource: 'outbounds', title: context.t('nav.outbounds'), icon: Icons.logout)),
+    _Destination('navigation.network', 'nav.endpoints', Icons.vpn_key_outlined, (context) => ResourcePage(resource: 'endpoints', title: context.t('nav.endpoints'), icon: Icons.vpn_key_outlined)),
+    _Destination('navigation.network', 'nav.config', Icons.route_outlined, (_) => const ConfigPage()),
+    _Destination('navigation.operations', 'nav.services', Icons.dns_outlined, (context) => ResourcePage(resource: 'services', title: context.t('nav.services'), icon: Icons.dns_outlined)),
+    _Destination('navigation.operations', 'nav.tools', Icons.settings_outlined, (_) => const SettingsPage()),
+    _Destination('navigation.operations', 'nav.admin', Icons.admin_panel_settings_outlined, (_) => const AdminPage()),
   ];
 
   @override
@@ -50,7 +58,7 @@ class _AppShellState extends State<AppShell> {
         ? state.profile!.id
         : state.profile?.normalizedBaseUrl ?? '';
     final body = KeyedSubtree(
-      key: ValueKey('$activePanelKey:$selected'),
+      key: ValueKey('$activePanelKey:$selected:$refreshVersion'),
       child: destinations[selected].builder(context),
     );
 
@@ -66,6 +74,7 @@ class _AppShellState extends State<AppShell> {
                 : () async {
                     try {
                       await state.refreshBootstrap();
+                      if (mounted) setState(() => refreshVersion += 1);
                       if (context.mounted) showMessage(context, context.tr('common.refreshed'));
                     } catch (exception) {
                       if (context.mounted) showMessage(context, exception.toString(), error: true);
@@ -78,48 +87,19 @@ class _AppShellState extends State<AppShell> {
       drawer: wide ? null : _drawer(context, state),
       body: Row(
         children: [
-          if (wide)
-            NavigationRail(
-              extended: MediaQuery.sizeOf(context).width >= 1180,
-              selectedIndex: selected,
-              onDestinationSelected: (index) => setState(() => selected = index),
-              leading: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircleAvatar(child: Icon(Icons.shield_outlined)),
-                    const SizedBox(height: 8),
-                    IconButton(
-                      tooltip: context.t('nav.switchPanel'),
-                      onPressed: state.busy
-                          ? null
-                          : () => _showPanelSwitcher(context),
-                      icon: const Icon(Icons.swap_horiz),
-                    ),
-                  ],
-                ),
-              ),
-              destinations: [
-                for (final destination in destinations)
-                  NavigationRailDestination(
-                    icon: Icon(destination.icon),
-                    label: Text(context.t(destination.labelKey)),
-                  ),
-              ],
-            ),
+          if (wide) SizedBox(width: 260, child: _drawer(context, state, persistent: true)),
           Expanded(child: body),
         ],
       ),
     );
   }
 
-  Widget _drawer(BuildContext context, AppState state) {
+  Widget _drawer(BuildContext context, AppState state, {bool persistent = false}) {
     return NavigationDrawer(
       selectedIndex: selected,
       onDestinationSelected: (index) {
         setState(() => selected = index);
-        Navigator.pop(context);
+        if (!persistent) Navigator.pop(context);
       },
       children: [
         Padding(
@@ -147,7 +127,7 @@ class _AppShellState extends State<AppShell> {
                 onPressed: state.busy
                     ? null
                     : () {
-                        Navigator.pop(context);
+                        if (!persistent) Navigator.pop(context);
                         if (mounted) _showPanelSwitcher(this.context);
                       },
                 icon: const Icon(Icons.swap_horiz),
@@ -156,17 +136,23 @@ class _AppShellState extends State<AppShell> {
           ),
         ),
         const Divider(),
-        for (final destination in destinations)
+        for (var index = 0; index < destinations.length; index++) ...[
+          if (index == 0 || destinations[index - 1].groupKey != destinations[index].groupKey)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 16, 16, 8),
+              child: Text(context.t(destinations[index].groupKey), style: Theme.of(context).textTheme.labelMedium),
+            ),
           NavigationDrawerDestination(
-            icon: Icon(destination.icon),
-            label: Text(context.t(destination.labelKey)),
+            icon: Icon(destinations[index].icon),
+            label: Text(context.t(destinations[index].labelKey)),
           ),
+        ],
         const Divider(),
         ListTile(
           leading: const Icon(Icons.logout),
           title: Text(context.t('nav.logout')),
           onTap: () async {
-            Navigator.pop(context);
+            if (!persistent) Navigator.pop(context);
             final revoke = await confirm(context, title: context.tr('nav.logoutTitle'), message: context.tr('nav.logoutMessage'), action: context.tr('nav.logoutRevoke'));
             await state.disconnect(revoke: revoke);
           },

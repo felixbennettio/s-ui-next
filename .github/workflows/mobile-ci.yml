@@ -108,6 +108,7 @@ jobs:
 
       - name: Verify Go module metadata
         run: |
+          test "$(go list -m)" = "github.com/felixbennettio/s-ui-next"
           go mod tidy
           git diff --exit-code -- go.mod go.sum
 
@@ -211,7 +212,15 @@ jobs:
         working-directory: ${{ runner.temp }}/sui-mobile
         run: |
           flutter analyze
-          flutter test
+          mkdir -p "$RUNNER_TEMP/mobile-preview"
+          SUI_PREVIEW_DIR="$RUNNER_TEMP/mobile-preview" flutter test --update-goldens
+
+      - name: Upload mobile layout previews
+        uses: actions/upload-artifact@v7
+        with:
+          name: mobile-layout-previews
+          path: ${{ runner.temp }}/mobile-preview/*.png
+          if-no-files-found: error
 
       - name: Build Android arm64
         working-directory: ${{ runner.temp }}/sui-mobile

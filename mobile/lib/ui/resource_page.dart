@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -71,16 +70,18 @@ class _ResourcePageState extends State<ResourcePage> {
         resource: widget.resource,
         initialValue: item,
         onSave: (value) async {
-          await context.read<AppState>().saveResource(widget.resource, action, value, apply: true);
+          final result = await context.read<AppState>().saveResource(widget.resource, action, value, apply: true);
+          if (mounted) showSaveResult(context, result);
         },
-        onSaveOnly: widget.resource == 'endpoints'
+        onSaveOnly: const {'endpoints', 'services', 'inbounds', 'outbounds', 'tls'}.contains(widget.resource)
             ? (value) async {
-                await context.read<AppState>().saveResource(widget.resource, action, value, apply: false);
+                final result = await context.read<AppState>().saveResource(widget.resource, action, value, apply: false);
+                if (mounted) showSaveResult(context, result);
               }
             : null,
       ),
     );
-    await load();
+    if (mounted) await load();
   }
 
   Future<void> remove(dynamic item) async {
@@ -90,9 +91,9 @@ class _ResourcePageState extends State<ResourcePage> {
       final value = item is Map
           ? (widget.resource == 'clients' || widget.resource == 'tls' ? item['id'] : item['tag'])
           : item;
-      await context.read<AppState>().saveResource(widget.resource, 'del', value);
+      final result = await context.read<AppState>().saveResource(widget.resource, 'del', value);
       await load();
-      if (mounted) showMessage(context, context.tr('resource.deleted'));
+      if (mounted) showSaveResult(context, result);
     } catch (exception) {
       if (mounted) showMessage(context, exception.toString(), error: true);
     }
@@ -132,7 +133,8 @@ class _ResourcePageState extends State<ResourcePage> {
               onPressed: () async {
                 try {
                   final value = jsonDecode(controller.text);
-                  await this.context.read<AppState>().saveResource(widget.resource, action, value);
+                  final result = await this.context.read<AppState>().saveResource(widget.resource, action, value);
+                  if (mounted) showSaveResult(this.context, result);
                   if (dialogContext.mounted) Navigator.pop(dialogContext);
                   await load();
                 } catch (exception) {
@@ -200,6 +202,7 @@ class _ResourcePageState extends State<ResourcePage> {
       showMessage(context, context.tr('resource.noWireguardPeers'), error: true);
       return;
     }
+    try {
     final api = context.read<AppState>().api!;
     final fallbackNames = [
       for (var index = 0; index < peers.length; index++) context.tr('resource.wireguardPeer', args: {'index': index + 1}),
@@ -215,6 +218,9 @@ class _ResourcePageState extends State<ResourcePage> {
     }
     if (!mounted) return;
     await _showQrValues('${item['tag']} · WireGuard', values);
+    } catch (exception) {
+      if (mounted) showMessage(context, exception.toString(), error: true);
+    }
   }
 
   bool _hasExportableWireGuardPeer(Map<String, dynamic> item) {
@@ -255,10 +261,10 @@ class _ResourcePageState extends State<ResourcePage> {
                       children: [
                         Text(value.label, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                         const SizedBox(height: 12),
-                        ColoredBox(color: Colors.white, child: Padding(padding: const EdgeInsets.all(10), child: QrImageView(data: value.value, size: 260))),
+                        LayoutBuilder(builder: (context, constraints) => ColoredBox(color: Colors.white, child: Padding(padding: const EdgeInsets.all(10), child: QrImageView(data: value.value, size: (constraints.maxWidth - 20).clamp(0, 260).toDouble())))),
                         const SizedBox(height: 10),
                         SelectableText(value.value, maxLines: 4),
-                        TextButton.icon(onPressed: () { Clipboard.setData(ClipboardData(text: value.value)); showMessage(context, context.tr('resource.copied')); }, icon: const Icon(Icons.copy), label: Text(context.t('resource.copy'))),
+                        TextButton.icon(onPressed: () => copyText(context, value.value), icon: const Icon(Icons.copy), label: Text(context.t('resource.copy'))),
                       ],
                     ),
                   ),
@@ -337,8 +343,7 @@ class _ResourcePageState extends State<ResourcePage> {
                 edit(clone, 'new');
                 return;
               case 'copy':
-                Clipboard.setData(ClipboardData(text: prettyJson(item)));
-                showMessage(context, context.tr('resource.jsonCopied'));
+                copyText(context, prettyJson(item));
                 return;
               case 'delete':
                 remove(item);

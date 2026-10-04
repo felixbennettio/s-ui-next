@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ciallothu/s-ui-next/config"
-	"github.com/ciallothu/s-ui-next/database"
-	"github.com/ciallothu/s-ui-next/logger"
-	"github.com/ciallothu/s-ui-next/service"
-	"github.com/ciallothu/s-ui-next/util"
-	"github.com/ciallothu/s-ui-next/util/common"
+	"github.com/felixbennettio/s-ui-next/config"
+	"github.com/felixbennettio/s-ui-next/database"
+	"github.com/felixbennettio/s-ui-next/logger"
+	"github.com/felixbennettio/s-ui-next/service"
+	"github.com/felixbennettio/s-ui-next/util"
+	"github.com/felixbennettio/s-ui-next/util/common"
 
 	"github.com/gin-gonic/gin"
 )
@@ -67,6 +67,7 @@ func (a *APIv3Handler) initRouter(g *gin.RouterGroup) {
 	protected.GET("/resources/:resource", a.getResource)
 	protected.POST("/resources/:resource", a.saveResource)
 	protected.POST("/wireguard/export", a.exportWireGuard)
+	protected.POST("/wireguard/secret", a.copyWireGuardSecret)
 	protected.POST("/wireguard/generate-psk", a.generateWireGuardPsk)
 
 	protected.GET("/status", a.status)
@@ -214,7 +215,7 @@ func (a *APIv3Handler) logout(c *gin.Context) {
 func (a *APIv3Handler) meta(c *gin.Context) {
 	v3OK(c, gin.H{
 		"apiVersion": "3", "panelVersion": config.GetVersion(), "panelName": config.GetName(),
-		"features": []string{"resources", "usage-filter", "stats-filter", "structured-logs", "audit", "backup", "totp", "oidc", "passkey", "wireguard-export", "wireguard-relay", "warp-egress", "transactional-apply"},
+		"features": []string{"resources", "usage-filter", "stats-filter", "structured-logs", "audit", "backup", "totp", "oidc", "passkey", "wireguard-export", "wireguard-relay", "wireguard-secret-copy", "warp-egress", "transactional-apply"},
 	})
 }
 
@@ -405,14 +406,29 @@ func (a *APIv3Handler) saveResource(c *gin.Context) {
 		v3Error(c, http.StatusBadRequest, err)
 		return
 	}
+	a.resourceSaveResult(c, changed, nil)
+}
+
+// A failed list refresh must not turn a committed mutation into a save error.
+func (a *APIv3Handler) resourceSaveResult(c *gin.Context, changed []string, processed *int) {
 	result := make(map[string]interface{}, len(changed))
+	warning := ""
 	for _, name := range changed {
 		value, valueErr := a.resourceValue(name, "")
 		if valueErr == nil {
 			result[name] = value
+		} else {
+			warning = "savedButRefreshFailed"
 		}
 	}
-	v3OK(c, gin.H{"changed": changed, "resources": result})
+	data := gin.H{"changed": changed, "resources": result, "saved": true}
+	if warning != "" {
+		data["warning"] = warning
+	}
+	if processed != nil {
+		data["processed"] = *processed
+	}
+	v3OK(c, data)
 }
 
 func (a *APIv3Handler) saveResourceBulk(c *gin.Context, resource string, body resourceMutation) {
@@ -429,22 +445,27 @@ func (a *APIv3Handler) saveResourceBulk(c *gin.Context, resource string, body re
 		v3Error(c, http.StatusBadRequest, common.NewError("unsupported bulk action: ", body.Action))
 		return
 	}
+	changed := []string{resource}
+	seen := map[string]bool{resource: true}
 	for index, item := range items {
 		apply := true
 		if body.Apply != nil {
 			apply = *body.Apply
 		}
-		if _, err := a.ConfigService.SaveWithApply(resource, action, item, "", apiUsername(c), getHostname(c), apply); err != nil {
+		updated, err := a.ConfigService.SaveWithApply(resource, action, item, "", apiUsername(c), getHostname(c), apply)
+		if err != nil {
 			v3Error(c, http.StatusBadRequest, common.NewErrorf("bulk item %d failed: %v", index+1, err))
 			return
 		}
+		for _, name := range updated {
+			if !seen[name] {
+				seen[name] = true
+				changed = append(changed, name)
+			}
+		}
 	}
-	value, err := a.resourceValue(resource, "")
-	if err != nil {
-		v3Error(c, http.StatusInternalServerError, err)
-		return
-	}
-	v3OK(c, gin.H{"changed": []string{resource}, "resources": gin.H{resource: value}, "processed": len(items)})
+	processed := len(items)
+	a.resourceSaveResult(c, changed, &processed)
 }
 
 func (a *APIv3Handler) exportWireGuard(c *gin.Context) {

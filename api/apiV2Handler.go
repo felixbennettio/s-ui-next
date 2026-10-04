@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ciallothu/s-ui-next/logger"
-	"github.com/ciallothu/s-ui-next/util/common"
+	"github.com/felixbennettio/s-ui-next/logger"
+	"github.com/felixbennettio/s-ui-next/util/common"
 
 	"github.com/gin-gonic/gin"
 )

@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/api_client.dart';
 import '../core/app_localizations.dart';
 import '../core/connection_profile.dart';
+import '../core/save_result.dart';
 
 class AppState extends ChangeNotifier {
   static const _legacyProfileKey = 'sui.connection.profile.v1';
@@ -202,10 +203,12 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     }
     try {
-      bootstrap = Map<String, dynamic>.from(await client.get('bootstrap') as Map);
+      final next = Map<String, dynamic>.from(await client.get('bootstrap') as Map);
+      if (api != client) return;
+      bootstrap = next;
       error = null;
     } catch (exception) {
-      error = exception.toString();
+      if (api == client) error = exception.toString();
       rethrow;
     } finally {
       if (notify) {
@@ -219,22 +222,37 @@ class AppState extends ChangeNotifier {
     return api!.get('resources/$resource', query: {if (id != null) 'id': id});
   }
 
-  Future<dynamic> saveResource(
+  Future<SaveResult> saveResource(
     String resource,
     String action,
     dynamic data, {
     List<int> initUsers = const [],
     bool apply = true,
   }) async {
-    final value = await api!.post('resources/$resource', data: {
+    final client = api!;
+    final value = await client.post('resources/$resource', data: {
       'action': action,
       'data': data,
       if (initUsers.isNotEmpty) 'initUsers': initUsers,
       'apply': apply,
     });
-    await refreshBootstrap(notify: false);
-    notifyListeners();
-    return value;
+    var refreshFailed = value is Map && value['warning'] == 'savedButRefreshFailed';
+    if (api == client) {
+      // Keep the committed resource changes even if the subsequent refresh fails.
+      if (value is Map && value['resources'] is Map) {
+        bootstrap['panel'] = <String, dynamic>{
+          if (bootstrap['panel'] is Map) ...Map<String, dynamic>.from(bootstrap['panel'] as Map),
+          ...Map<String, dynamic>.from(value['resources'] as Map),
+        };
+      }
+      try {
+        await refreshBootstrap(notify: false);
+      } catch (_) {
+        refreshFailed = true;
+      }
+      if (api == client) notifyListeners();
+    }
+    return SaveResult(refreshFailed: refreshFailed, applied: apply && resource != 'settings');
   }
 
   Future<void> disconnect({bool revoke = false}) async {

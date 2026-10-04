@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ciallothu/s-ui-next/logger"
+	"github.com/felixbennettio/s-ui-next/logger"
 )
 
 func NewErrorf(format string, a ...interface{}) error {

@@ -3,9 +3,9 @@ package service
 import (
 	"encoding/json"
 
-	"github.com/ciallothu/s-ui-next/database"
-	"github.com/ciallothu/s-ui-next/database/model"
-	"github.com/ciallothu/s-ui-next/util/common"
+	"github.com/felixbennettio/s-ui-next/database"
+	"github.com/felixbennettio/s-ui-next/database/model"
+	"github.com/felixbennettio/s-ui-next/util/common"
 )
 
 // WireGuardSecret is called only by an explicit authenticated copy action.
