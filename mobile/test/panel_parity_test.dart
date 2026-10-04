@@ -80,6 +80,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() async {
     if (Platform.environment['SUI_PREVIEW_DIR'] == null) return;
+    await (FontLoader('MaterialIcons')..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
     final root = Platform.environment['FLUTTER_ROOT'];
     final candidates = [
       '$root/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf',
@@ -134,6 +135,15 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Running'), findsOneWidget);
       await _preview(tester, 'dashboard-${size.width.toInt()}');
+      final dashboardScroll = find.descendant(of: find.byType(DashboardPage), matching: find.byType(ListView)).first;
+      for (var index = 0; index < 6; index++) {
+        await tester.drag(dashboardScroll, const Offset(0, -600));
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(tester.takeException(), isNull);
+      }
+      await _preview(tester, 'dashboard-bottom-${size.width.toInt()}');
+      await tester.drag(dashboardScroll, const Offset(0, 6000));
+      await tester.pump(const Duration(milliseconds: 300));
       if (size.width < 920) {
         await tester.tap(find.byTooltip('Open navigation menu'));
         await tester.pumpAndSettle();
