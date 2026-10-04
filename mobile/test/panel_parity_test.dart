@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,9 @@ import 'package:sui_mobile/core/api_client.dart';
 import 'package:sui_mobile/core/connection_profile.dart';
 import 'package:sui_mobile/core/dashboard_sample.dart';
 import 'package:sui_mobile/state/app_state.dart';
+import 'package:sui_mobile/main.dart';
+import 'package:sui_mobile/core/save_result.dart';
+import 'package:sui_mobile/ui/config_page.dart';
 import 'package:sui_mobile/ui/dashboard_page.dart';
 import 'package:sui_mobile/ui/shell.dart';
 import 'package:sui_mobile/ui/visual_editor.dart';
@@ -52,7 +56,7 @@ class _PanelApi extends ApiClient {
 }
 
 Widget _app(AppState state, Widget child) => ChangeNotifierProvider.value(value: state,
-  child: MaterialApp(home: Scaffold(body: RepaintBoundary(key: const ValueKey('preview'), child: child))));
+  child: MaterialApp(theme: SuiMobile.buildTheme(Brightness.light), home: Scaffold(body: RepaintBoundary(key: const ValueKey('preview'), child: child))));
 
 Future<void> _preview(WidgetTester tester, String name) async {
   final directory = Platform.environment['SUI_PREVIEW_DIR'];
@@ -61,7 +65,52 @@ Future<void> _preview(WidgetTester tester, String name) async {
   }
 }
 
+class _ConfigState extends AppState {
+  Map<String, dynamic> config = {'route': {}, 'dns': {}};
+  @override
+  Future<dynamic> getResource(String resource, {String? id}) async => config;
+  @override
+  Future<SaveResult> saveResource(String resource, String action, dynamic data,
+      {List<int> initUsers = const [], bool apply = true}) async {
+    config = Map<String, dynamic>.from(data as Map);
+    return const SaveResult();
+  }
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    if (Platform.environment['SUI_PREVIEW_DIR'] == null) return;
+    final root = Platform.environment['FLUTTER_ROOT'];
+    final candidates = [
+      '$root/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf',
+      '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    ];
+    for (final path in candidates) {
+      final font = File(path);
+      if (!font.existsSync()) continue;
+      await (FontLoader('Roboto')..addFont(font.readAsBytes().then(ByteData.sublistView))).load();
+      break;
+    }
+  });
+
+  testWidgets('full JSON config keeps new fields and removes deleted fields', (tester) async {
+    final state = _ConfigState()..localeCode = 'en';
+    await tester.pumpWidget(_app(state, const ConfigPage()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Full JSON'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '{"route":{},"experimental":{"cache_file":{"enabled":true}}}');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(state.config.containsKey('dns'), isFalse);
+    expect(state.config['experimental']['cache_file']['enabled'], isTrue);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   test('network rates use elapsed time and tolerate a reset counter', () {
     final time = DateTime(2026);
     final first = DashboardSample.fromStatus({'net': {'sent': 100, 'recv': 100}}, time, null);

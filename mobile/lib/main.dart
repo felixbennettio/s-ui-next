@@ -35,15 +35,15 @@ class SuiMobile extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
           ],
           themeMode: ThemeMode.system,
-          theme: _theme(Brightness.light),
-          darkTheme: _theme(Brightness.dark),
+          theme: buildTheme(Brightness.light),
+          darkTheme: buildTheme(Brightness.dark),
           home: const AppGate(),
         ),
       ),
     );
   }
 
-  ThemeData _theme(Brightness brightness) {
+  static ThemeData buildTheme(Brightness brightness) {
     final scheme = ColorScheme.fromSeed(
       seedColor: const Color(0xff0d47a1),
       brightness: brightness,
