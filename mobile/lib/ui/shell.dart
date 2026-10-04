@@ -151,7 +151,13 @@ class _AppShellState extends State<AppShell> {
             ),
           NavigationDrawerDestination(
             icon: Icon(destinations[index].icon),
-            label: Text(context.t(destinations[index].labelKey)),
+            label: Expanded(
+              child: Text(
+                context.t(destinations[index].labelKey),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
         ],
         const Divider(),
