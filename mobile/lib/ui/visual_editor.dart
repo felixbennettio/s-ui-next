@@ -459,8 +459,9 @@ class _VisualEditorDialogState extends State<VisualEditorDialog> {
           'field': key,
           if (key != 'private_key') 'publicKey': parent['public_key'],
         });
+        if (!mounted) return;
         if (result is! String || result.isEmpty || schema.isRedactedSecret(result)) {
-          throw FormatException(context.mounted ? context.tr('common.copyFailed') : 'Key unavailable');
+          throw FormatException(context.tr('common.copyFailed'));
         }
         secret = result;
       }

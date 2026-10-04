@@ -73,7 +73,7 @@ class _ResourcePageState extends State<ResourcePage> {
           final result = await context.read<AppState>().saveResource(widget.resource, action, value, apply: true);
           if (mounted) showSaveResult(context, result);
         },
-        onSaveOnly: const {'endpoints', 'services', 'inbounds', 'outbounds', 'tls'}.contains(widget.resource)
+        onSaveOnly: widget.resource == 'endpoints'
             ? (value) async {
                 final result = await context.read<AppState>().saveResource(widget.resource, action, value, apply: false);
                 if (mounted) showSaveResult(context, result);
@@ -101,6 +101,7 @@ class _ResourcePageState extends State<ResourcePage> {
 
   Future<void> bulk() async {
     var action = 'addbulk';
+    var executing = false;
     final controller = TextEditingController(text: '[]');
     await showDialog<void>(
       context: context,
@@ -128,9 +129,10 @@ class _ResourcePageState extends State<ResourcePage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(context.t('common.cancel'))),
+            TextButton(onPressed: executing ? null : () => Navigator.pop(dialogContext), child: Text(context.t('common.cancel'))),
             FilledButton(
-              onPressed: () async {
+              onPressed: executing ? null : () async {
+                setDialogState(() => executing = true);
                 try {
                   final value = jsonDecode(controller.text);
                   final result = await this.context.read<AppState>().saveResource(widget.resource, action, value);
@@ -139,6 +141,8 @@ class _ResourcePageState extends State<ResourcePage> {
                   await load();
                 } catch (exception) {
                   if (dialogContext.mounted) showMessage(dialogContext, exception.toString(), error: true);
+                } finally {
+                  if (dialogContext.mounted) setDialogState(() => executing = false);
                 }
               },
               child: Text(context.t('resource.execute')),
@@ -203,21 +207,21 @@ class _ResourcePageState extends State<ResourcePage> {
       return;
     }
     try {
-    final api = context.read<AppState>().api!;
-    final fallbackNames = [
-      for (var index = 0; index < peers.length; index++) context.tr('resource.wireguardPeer', args: {'index': index + 1}),
-    ];
-    final values = <_QrValue>[];
-    for (var index = 0; index < peers.length; index++) {
-      final peer = peers[index];
-      if (peer is! Map || !_isExportableWireGuardPeer(item, peer)) continue;
-      final result = Map<String, dynamic>.from(
-        await api.post('wireguard/export', data: {'tag': item['tag'], 'peerIndex': index}) as Map,
-      );
-      values.add(_QrValue(result['name']?.toString() ?? fallbackNames[index], result['config']?.toString() ?? ''));
-    }
-    if (!mounted) return;
-    await _showQrValues('${item['tag']} · WireGuard', values);
+      final api = context.read<AppState>().api!;
+      final fallbackNames = [
+        for (var index = 0; index < peers.length; index++) context.tr('resource.wireguardPeer', args: {'index': index + 1}),
+      ];
+      final values = <_QrValue>[];
+      for (var index = 0; index < peers.length; index++) {
+        final peer = peers[index];
+        if (peer is! Map || !_isExportableWireGuardPeer(item, peer)) continue;
+        final result = Map<String, dynamic>.from(
+          await api.post('wireguard/export', data: {'tag': item['tag'], 'peerIndex': index}) as Map,
+        );
+        values.add(_QrValue(result['name']?.toString() ?? fallbackNames[index], result['config']?.toString() ?? ''));
+      }
+      if (!mounted) return;
+      await _showQrValues('${item['tag']} · WireGuard', values);
     } catch (exception) {
       if (mounted) showMessage(context, exception.toString(), error: true);
     }

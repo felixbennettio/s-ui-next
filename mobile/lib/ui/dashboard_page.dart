@@ -111,7 +111,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
   Future<void> restartCore() async {
     if (restarting) return;
     if (!await confirm(context, title: context.tr('dashboard.restartCore'),
-        message: context.tr('dashboard.restartConfirm'), action: context.tr('dashboard.restartCore'))) return;
+        message: context.tr('dashboard.restartConfirm'), action: context.tr('dashboard.restartCore'))) {
+      return;
+    }
     if (!mounted) return;
     setState(() => restarting = true);
     try {

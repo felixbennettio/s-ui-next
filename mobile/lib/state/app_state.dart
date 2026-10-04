@@ -252,7 +252,7 @@ class AppState extends ChangeNotifier {
       }
       if (api == client) notifyListeners();
     }
-    return SaveResult(refreshFailed: refreshFailed, applied: apply && resource != 'settings');
+    return SaveResult(refreshFailed: refreshFailed, applied: apply && const {'endpoints', 'config'}.contains(resource));
   }
 
   Future<void> disconnect({bool revoke = false}) async {

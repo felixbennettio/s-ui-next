@@ -45,7 +45,7 @@ void main() {
     expect((await state.saveResource('outbounds', 'new', {})).refreshFailed, isTrue);
     api.warning = false;
     expect((await state.saveResource('endpoints', 'edit', {}, apply: false)).messageKey, 'common.saved');
-    expect((await state.saveResource('outbounds', 'edit', {})).messageKey, 'common.savedApplied');
+    expect((await state.saveResource('config', 'set', {})).messageKey, 'common.savedApplied');
   });
 
   test('a rejected mutation still fails', () async {

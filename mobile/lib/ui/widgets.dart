@@ -21,6 +21,8 @@ Future<void> copyText(BuildContext context, String value) async {
     if (context.mounted) showMessage(context, context.tr('common.copyFailed'), error: true);
   }
 
+}
+
 const _selectMenuRadius = BorderRadius.all(Radius.circular(16));
 const _selectMenuRowHeight = kMinInteractiveDimension;
 const _selectMenuMaxRows = 5;
