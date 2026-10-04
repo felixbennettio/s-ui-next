@@ -35,10 +35,12 @@ class _AppShellState extends State<AppShell> {
   void navigate(String key) {
     final tools = key == 'settings.tools';
     final index = destinations.indexWhere((item) => item.labelKey == (tools ? 'nav.tools' : key));
-    if (index >= 0) setState(() {
-      selected = index;
-      openTools = tools;
-    });
+    if (index >= 0) {
+      setState(() {
+        selected = index;
+        openTools = tools;
+      });
+    }
   }
 
   late final destinations = <_Destination>[
