@@ -389,7 +389,7 @@ const _en = <String, String>{
   'error.tokenRequired': 'API token is required',
   'error.requestFailed': 'Request failed',
   'error.connectionTimeout': 'Connection timed out. Check address and network.',
-  'error.connectionError': 'Unable to connect. Check address, certificate and custom headers.',
+  'error.connectionError': 'Unable to connect. Check the panel address, device network, and the app’s network/local network permissions in system settings.',
   'error.badCertificate': 'Panel TLS certificate is invalid',
   'error.receiveTimeout': 'Panel response timed out',
 };
@@ -719,7 +719,7 @@ const _zhHans = <String, String>{
   'error.tokenRequired': '请填写 API Token',
   'error.requestFailed': '请求失败',
   'error.connectionTimeout': '连接超时，请检查地址与网络',
-  'error.connectionError': '无法连接面板，请检查地址、证书与自定义 Header',
+  'error.connectionError': '无法连接面板，请检查面板地址、设备网络，以及系统设置中此 app 的联网／本地网络权限',
   'error.badCertificate': '面板 TLS 证书无效',
   'error.receiveTimeout': '面板响应超时',
 };
