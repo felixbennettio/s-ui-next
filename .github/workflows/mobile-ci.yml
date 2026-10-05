@@ -63,6 +63,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Test mobile network configuration
+        run: python3 -m unittest discover -s mobile/tool -p 'test_*.py'
+
       - name: Render 1024px icon from vector source
         run: |
           sudo apt-get update
@@ -108,6 +111,7 @@ jobs:
 
       - name: Verify Go module metadata
         run: |
+          test "$(go list -m)" = "github.com/felixbennettio/s-ui-next"
           go mod tidy
           git diff --exit-code -- go.mod go.sum
 
@@ -198,7 +202,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/sui-mobile/assets"
           cp "$RUNNER_TEMP/mobile-icon/logo.png" "$RUNNER_TEMP/sui-mobile/assets/logo.png"
           sed -i 's/ios: true/ios: false/' "$RUNNER_TEMP/sui-mobile/pubspec.yaml"
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' "$RUNNER_TEMP/sui-mobile/android/app/src/main/AndroidManifest.xml"
+          python3 mobile/tool/network_config.py configure-android "$RUNNER_TEMP/sui-mobile/android/app/src/main/AndroidManifest.xml"
           sed -i 's/android:label="sui_mobile"/android:label="S-UI Next"/' "$RUNNER_TEMP/sui-mobile/android/app/src/main/AndroidManifest.xml"
 
       - name: Resolve dependencies and icons
@@ -211,11 +215,22 @@ jobs:
         working-directory: ${{ runner.temp }}/sui-mobile
         run: |
           flutter analyze
-          flutter test
+          mkdir -p "$RUNNER_TEMP/mobile-preview"
+          SUI_PREVIEW_DIR="$RUNNER_TEMP/mobile-preview" flutter test --update-goldens
+
+      - name: Upload mobile layout previews
+        uses: actions/upload-artifact@v7
+        with:
+          name: mobile-layout-previews
+          path: ${{ runner.temp }}/mobile-preview/*.png
+          if-no-files-found: error
 
       - name: Build Android arm64
         working-directory: ${{ runner.temp }}/sui-mobile
         run: flutter build apk --release --target-platform android-arm64 --split-per-abi
+
+      - name: Verify networking in release APK
+        run: python3 mobile/tool/network_config.py verify-apk "$RUNNER_TEMP/sui-mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
 
   iphone-arm64:
     name: Check iPhone arm64
@@ -247,8 +262,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/sui-mobile/assets"
           cp "$RUNNER_TEMP/mobile-icon/logo.png" "$RUNNER_TEMP/sui-mobile/assets/logo.png"
           sed -i '' 's/android: true/android: false/' "$RUNNER_TEMP/sui-mobile/pubspec.yaml"
-          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist" || true
+          python3 mobile/tool/network_config.py configure-ios "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist"
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName S-UI Next" "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist"
           /usr/libexec/PlistBuddy -c "Set :CFBundleName S-UI Next" "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist"
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 13.0;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g' "$RUNNER_TEMP/sui-mobile/ios/Runner.xcodeproj/project.pbxproj"
@@ -269,3 +283,6 @@ jobs:
       - name: Build iPhone arm64 without signing
         working-directory: ${{ runner.temp }}/sui-mobile
         run: flutter build ios --release --no-codesign
+
+      - name: Verify networking in release iPhone app
+        run: python3 mobile/tool/network_config.py verify-ios "$RUNNER_TEMP/sui-mobile/build/ios/iphoneos/Runner.app/Info.plist"

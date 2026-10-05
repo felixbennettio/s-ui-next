@@ -1,4 +1,4 @@
-module github.com/ciallothu/s-ui-next
+module github.com/felixbennettio/s-ui-next
 
 go 1.26.8
 

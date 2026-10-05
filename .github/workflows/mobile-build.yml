@@ -88,7 +88,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/sui-mobile/assets"
           cp "$RUNNER_TEMP/mobile-icon/logo.png" "$RUNNER_TEMP/sui-mobile/assets/logo.png"
           sed -i 's/ios: true/ios: false/' "$RUNNER_TEMP/sui-mobile/pubspec.yaml"
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' "$RUNNER_TEMP/sui-mobile/android/app/src/main/AndroidManifest.xml"
+          python3 mobile/tool/network_config.py configure-android "$RUNNER_TEMP/sui-mobile/android/app/src/main/AndroidManifest.xml"
           sed -i 's/android:label="sui_mobile"/android:label="S-UI Next"/' "$RUNNER_TEMP/sui-mobile/android/app/src/main/AndroidManifest.xml"
 
       - name: Stamp app version from release tag
@@ -126,6 +126,9 @@ jobs:
       - name: Build Android arm64 APK
         working-directory: ${{ runner.temp }}/sui-mobile
         run: flutter build apk --release --target-platform android-arm64 --split-per-abi --build-name "$APP_VERSION" --build-number "$APP_BUILD_NUMBER"
+
+      - name: Verify networking in release APK
+        run: python3 mobile/tool/network_config.py verify-apk "$RUNNER_TEMP/sui-mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
 
       - name: Name Android package with version
         run: cp "$RUNNER_TEMP/sui-mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk" "$RUNNER_TEMP/s-ui-next-${BUILD_VERSION}-android-arm64.apk"
@@ -179,8 +182,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/sui-mobile/assets"
           cp "$RUNNER_TEMP/mobile-icon/logo.png" "$RUNNER_TEMP/sui-mobile/assets/logo.png"
           sed -i '' 's/android: true/android: false/' "$RUNNER_TEMP/sui-mobile/pubspec.yaml"
-          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist" || true
+          python3 mobile/tool/network_config.py configure-ios "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist"
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName S-UI Next" "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist"
           /usr/libexec/PlistBuddy -c "Set :CFBundleName S-UI Next" "$RUNNER_TEMP/sui-mobile/ios/Runner/Info.plist"
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 13.0;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g' "$RUNNER_TEMP/sui-mobile/ios/Runner.xcodeproj/project.pbxproj"
@@ -221,6 +223,9 @@ jobs:
       - name: Build iPhone arm64 without signing
         working-directory: ${{ runner.temp }}/sui-mobile
         run: flutter build ios --release --no-codesign --build-name "$APP_VERSION" --build-number "$APP_BUILD_NUMBER"
+
+      - name: Verify networking in release iPhone app
+        run: python3 mobile/tool/network_config.py verify-ios "$RUNNER_TEMP/sui-mobile/build/ios/iphoneos/Runner.app/Info.plist"
 
       - name: Package unsigned IPA
         working-directory: ${{ runner.temp }}/sui-mobile

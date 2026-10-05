@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/ciallothu/s-ui-next/config"
-	"github.com/ciallothu/s-ui-next/database"
-	"github.com/ciallothu/s-ui-next/service"
+	"github.com/felixbennettio/s-ui-next/config"
+	"github.com/felixbennettio/s-ui-next/database"
+	"github.com/felixbennettio/s-ui-next/service"
 )
 
 func resetAdmin() {

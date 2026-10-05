@@ -9,7 +9,9 @@ import 'visual_editor.dart';
 import 'widgets.dart';
 
 class ConfigPage extends StatefulWidget {
-  const ConfigPage({super.key});
+  const ConfigPage({super.key, this.settingsOnly = false});
+
+  final bool settingsOnly;
 
   @override
   State<ConfigPage> createState() => _ConfigPageState();
@@ -25,7 +27,7 @@ class _ConfigPageState extends State<ConfigPage> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    tabs = TabController(length: 5, vsync: this);
+    tabs = TabController(length: 4, vsync: this);
     load();
   }
 
@@ -42,11 +44,14 @@ class _ConfigPageState extends State<ConfigPage> with SingleTickerProviderStateM
     });
     try {
       final state = context.read<AppState>();
-      final values = await Future.wait([state.getResource('config'), state.getResource('settings')]);
+      final result = await state.getResource(widget.settingsOnly ? 'settings' : 'config');
       if (mounted) {
         setState(() {
-          config = Map<String, dynamic>.from(values[0] as Map);
-          settings = Map<String, dynamic>.from(values[1] as Map);
+          if (widget.settingsOnly) {
+            settings = Map<String, dynamic>.from(result as Map);
+          } else {
+            config = Map<String, dynamic>.from(result as Map);
+          }
         });
       }
     } catch (exception) {
@@ -56,29 +61,31 @@ class _ConfigPageState extends State<ConfigPage> with SingleTickerProviderStateM
     }
   }
 
-  Future<void> editConfigSection(String title, List<String> keys) async {
+  Future<void> editConfigSection(String title, List<String> keys, {bool full = false}) async {
     final section = <String, dynamic>{for (final key in keys) key: config[key]};
     await showDialog<bool>(
       context: context,
       builder: (_) => VisualEditorDialog(
         title: title,
         resource: 'config',
+        initialJson: full,
         initialValue: section,
         onSave: (value) async {
           if (value is! Map) throw FormatException(context.tr('config.configObjectRequired'));
-          final next = Map<String, dynamic>.from(config);
-          for (final key in keys) {
+          final next = Map<String, dynamic>.from(full ? value : config);
+          for (final key in full ? <String>[] : keys) {
             if (value.containsKey(key)) {
               next[key] = value[key];
             } else {
               next.remove(key);
             }
           }
-          await context.read<AppState>().saveResource('config', 'set', next);
+          final result = await context.read<AppState>().saveResource('config', 'set', next);
+          if (mounted) showSaveResult(context, result);
         },
       ),
     );
-    await load();
+    if (mounted) await load();
   }
 
   Future<void> editSettings() async {
@@ -90,17 +97,19 @@ class _ConfigPageState extends State<ConfigPage> with SingleTickerProviderStateM
         initialValue: settings,
         onSave: (value) async {
           if (value is! Map) throw FormatException(context.tr('config.settingsObjectRequired'));
-          await context.read<AppState>().saveResource('settings', 'set', value);
+          final result = await context.read<AppState>().saveResource('settings', 'set', value);
+          if (mounted) showSaveResult(context, result);
         },
       ),
     );
-    await load();
+    if (mounted) await load();
   }
 
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
     if (error != null) return EmptyState(label: error!, icon: Icons.error_outline);
+    if (widget.settingsOnly) return _settingsSection();
     return Column(
       children: [
         PageHeader(title: context.t('config.title'), subtitle: context.t('config.subtitle')),
@@ -108,22 +117,20 @@ class _ConfigPageState extends State<ConfigPage> with SingleTickerProviderStateM
           controller: tabs,
           isScrollable: true,
           tabs: [
-            Tab(text: context.t('config.basics')),
-            const Tab(text: 'DNS'),
             Tab(text: context.t('config.routing')),
-            Tab(text: context.t('config.experimental')),
-            Tab(text: context.t('config.panelSettings')),
+            const Tab(text: 'DNS'),
+            Tab(text: context.t('config.basics')),
+            Tab(text: context.t('config.rawJson')),
           ],
         ),
         Expanded(
           child: TabBarView(
             controller: tabs,
             children: [
-              _section(context.t('config.basicInfo'), ['log', 'ntp'], Icons.settings_input_component_outlined),
-              _section('DNS', ['dns'], Icons.dns_outlined),
               _section(context.t('config.routingRulesets'), ['route'], Icons.route_outlined),
-              _section(context.t('config.experimental'), ['experimental'], Icons.science_outlined),
-              _settingsSection(),
+              _section('DNS', ['dns'], Icons.dns_outlined),
+              _section(context.t('config.basicInfo'), ['log', 'ntp', 'experimental'], Icons.settings_input_component_outlined),
+              _section(context.t('config.rawJson'), config.keys.toList(), Icons.data_object, full: true),
             ],
           ),
         ),
@@ -131,7 +138,7 @@ class _ConfigPageState extends State<ConfigPage> with SingleTickerProviderStateM
     );
   }
 
-  Widget _section(String title, List<String> keys, IconData icon) {
+  Widget _section(String title, List<String> keys, IconData icon, {bool full = false}) {
     final value = <String, dynamic>{for (final key in keys) key: config[key]};
     return ListView(
       padding: const EdgeInsets.all(12),
@@ -142,7 +149,7 @@ class _ConfigPageState extends State<ConfigPage> with SingleTickerProviderStateM
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [Icon(icon), const SizedBox(width: 10), Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700))), FilledButton.tonalIcon(onPressed: () => editConfigSection(title, keys), icon: const Icon(Icons.edit_outlined), label: Text(context.t('config.edit')))]),
+                Row(children: [Icon(icon), const SizedBox(width: 10), Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700))), FilledButton.tonalIcon(onPressed: () => editConfigSection(title, keys, full: full), icon: const Icon(Icons.edit_outlined), label: Text(context.t('config.edit')))]),
                 const SizedBox(height: 16),
                 SelectableText(const JsonEncoder.withIndent('  ').convert(value), style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
               ],

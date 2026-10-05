@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ciallothu/s-ui-next/app"
-	"github.com/ciallothu/s-ui-next/cmd"
+	"github.com/felixbennettio/s-ui-next/app"
+	"github.com/felixbennettio/s-ui-next/cmd"
 )
 
 func runApp() {

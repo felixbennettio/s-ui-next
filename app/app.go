@@ -3,14 +3,14 @@ package app
 import (
 	"log"
 
-	"github.com/ciallothu/s-ui-next/config"
-	"github.com/ciallothu/s-ui-next/core"
-	"github.com/ciallothu/s-ui-next/cronjob"
-	"github.com/ciallothu/s-ui-next/database"
-	"github.com/ciallothu/s-ui-next/logger"
-	"github.com/ciallothu/s-ui-next/service"
-	"github.com/ciallothu/s-ui-next/sub"
-	"github.com/ciallothu/s-ui-next/web"
+	"github.com/felixbennettio/s-ui-next/config"
+	"github.com/felixbennettio/s-ui-next/core"
+	"github.com/felixbennettio/s-ui-next/cronjob"
+	"github.com/felixbennettio/s-ui-next/database"
+	"github.com/felixbennettio/s-ui-next/logger"
+	"github.com/felixbennettio/s-ui-next/service"
+	"github.com/felixbennettio/s-ui-next/sub"
+	"github.com/felixbennettio/s-ui-next/web"
 
 	"github.com/op/go-logging"
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ciallothu/s-ui-next/service"
-	"github.com/ciallothu/s-ui-next/util"
+	"github.com/felixbennettio/s-ui-next/service"
+	"github.com/felixbennettio/s-ui-next/util"
 
 	"gopkg.in/yaml.v3"
 )

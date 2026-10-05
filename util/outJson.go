@@ -3,9 +3,9 @@ package util
 import (
 	"encoding/json"
 
-	"github.com/ciallothu/s-ui-next/util/common"
+	"github.com/felixbennettio/s-ui-next/util/common"
 
-	"github.com/ciallothu/s-ui-next/database/model"
+	"github.com/felixbennettio/s-ui-next/database/model"
 )
 
 // Fill Inbound's out_json

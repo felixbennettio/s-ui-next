@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ciallothu/s-ui-next/logger"
+	"github.com/felixbennettio/s-ui-next/logger"
 )
 
 type ConnectionFilter struct {

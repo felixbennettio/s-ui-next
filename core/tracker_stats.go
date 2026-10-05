@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ciallothu/s-ui-next/database/model"
+	"github.com/felixbennettio/s-ui-next/database/model"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing/common/atomic"

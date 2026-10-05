@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	projectLogger "github.com/ciallothu/s-ui-next/logger"
+	projectLogger "github.com/felixbennettio/s-ui-next/logger"
 	"github.com/op/go-logging"
 )
 
