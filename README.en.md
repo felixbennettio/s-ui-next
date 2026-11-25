@@ -15,6 +15,20 @@ The embedded core currently follows `sing-box v1.13.14`. Existing Web management
 
 > Use this project only where it is legal to do so. You are responsible for the configuration you deploy and the traffic carried by it.
 
+## Screenshots
+
+<p>
+  <img src="docs/screenshots/iphone-1-home.png" width="220" alt="iPhone home">
+  <img src="docs/screenshots/iphone-2-users.png" width="220" alt="iPhone users">
+  <img src="docs/screenshots/iphone-3-outbounds.png" width="220" alt="iPhone outbounds">
+</p>
+
+<p>
+  <img src="docs/screenshots/mac-1-overview.png" width="640" alt="Mac overview">
+</p>
+
+[Download on the App Store](https://apps.apple.com/app/id6838594447)
+
 ## What S-UI Next Adds
 
 ### Web panel and configuration

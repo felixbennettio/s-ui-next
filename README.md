@@ -15,6 +15,20 @@ S-UI Next 是基于 [alireza0/s-ui](https://github.com/alireza0/s-ui) 继续维�
 
 > 请只在当地法律允许的范围内使用本项目。部署配置及其承载的流量由使用者自行负责。
 
+## 截图
+
+<p>
+  <img src="docs/screenshots/iphone-1-home.png" width="220" alt="iPhone 首页">
+  <img src="docs/screenshots/iphone-2-users.png" width="220" alt="iPhone 用户">
+  <img src="docs/screenshots/iphone-3-outbounds.png" width="220" alt="iPhone 出站">
+</p>
+
+<p>
+  <img src="docs/screenshots/mac-1-overview.png" width="640" alt="Mac 概览">
+</p>
+
+[在 App Store 下载](https://apps.apple.com/app/id6838594447)
+
 ## S-UI Next 增加了什么
 
 ### Web 面板与配置管理
